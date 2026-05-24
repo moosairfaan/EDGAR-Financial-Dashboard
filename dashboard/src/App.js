@@ -24,6 +24,7 @@ function Screener() {
     setResults(await res.json());
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { run(); }, []);
 
   return (
