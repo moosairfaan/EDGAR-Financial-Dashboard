@@ -3,16 +3,21 @@ import json
 
 HEADERS = {"User-Agent": "moosairfaan03@gmail.com"}
 
+REVENUE_KEYS = [
+    "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "Revenues",
+    "SalesRevenueNet",
+]
+
 USD_METRICS = {
-    "RevenueFromContractWithCustomerExcludingAssessedTax": "revenue",
-    "NetIncomeLoss":             "net_income",
-    "OperatingIncomeLoss":       "operating_income",
+    "NetIncomeLoss":                 "net_income",
+    "OperatingIncomeLoss":           "operating_income",
     "ResearchAndDevelopmentExpense": "rd_expense",
-    "LongTermDebtNoncurrent":    "long_term_debt",  # fixed key
+    "LongTermDebtNoncurrent":        "long_term_debt",
 }
 
 SHARE_METRICS = {
-    "EarningsPerShareBasic": "eps",  # uses shares unit, not USD
+    "EarningsPerShareBasic": "eps",
 }
 
 def fetch_company_facts(cik: str) -> dict:
@@ -37,10 +42,20 @@ def extract_annual(facts: dict, xbrl_key: str, unit: str = "USD") -> dict:
                 seen[fy] = entry["val"]
     return seen
 
+def extract_revenue(facts: dict) -> dict:
+    """Try multiple keys for revenue, return first one that has data."""
+    for key in REVENUE_KEYS:
+        data = extract_annual(facts, key)
+        if data:
+            return data
+    return {}
+
 def parse_company(cik: str) -> dict:
     raw = fetch_company_facts(cik)
     name = raw["entityName"]
     result = {"company": name, "cik": cik, "financials": {}}
+
+    result["financials"]["revenue"] = extract_revenue(raw)
 
     for xbrl_key, label in USD_METRICS.items():
         result["financials"][label] = extract_annual(raw, xbrl_key, "USD")
@@ -51,8 +66,7 @@ def parse_company(cik: str) -> dict:
     return result
 
 if __name__ == "__main__":
-    # Test with Apple AND Microsoft
-    for name, cik in [("Apple", "320193"), ("Microsoft", "789019")]:
+    for name, cik in [("Apple", "320193"), ("Microsoft", "789019"), ("Netflix", "1065280")]:
         data = parse_company(cik)
         print(f"\n=== {name} ===")
         for metric, values in data["financials"].items():
