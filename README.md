@@ -2,6 +2,9 @@
 
 A full-stack ETL pipeline that ingests SEC EDGAR filings, parses XBRL financial data, and serves it through a REST API with an interactive React dashboard.
 
+# Live URL
+https://edgarfinancial.vercel.app
+
 ## What it does
 
 - Pulls annual financial filings directly from the SEC EDGAR public API (no API key needed)
