@@ -16,6 +16,16 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     init_db()
+    # Ingest data if database is empty
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        count = conn.execute(text("SELECT COUNT(*) FROM companies")).scalar()
+    if count == 0:
+        print("Empty database — ingesting from EDGAR...")
+        from ingest import ingest, COMPANIES
+        for name, cik in COMPANIES:
+            ingest(cik, name)
+        print("Ingestion complete.")
 
 @app.get("/companies")
 def list_companies():
